@@ -153,9 +153,11 @@ llvm::Module  *getLLVMModule(string name, const std::string &triple)
     } else if (TT.getOS() == llvm::Triple::Linux) {
         if(TT.getArch() == llvm::Triple::x86) {
             layout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:32:32-n8:16:32-S128";
+
         } else if(TT.getArch() == llvm::Triple::x86_64) {
             // x86_64-linux-gnu
-            layout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128";
+            //layout = "e-m:e-i64:64-f80:128-n8:16:32:64-S128";
+            layout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128";
         } else {
             std::cerr << "Unsupported arch in triple: " << triple << "\n";
             return nullptr;
@@ -500,7 +502,7 @@ int main(int argc, char *argv[])
           }
 
           M->addModuleFlag(Module::Error, "Debug Info Version", DEBUG_METADATA_VERSION);
-          M->addModuleFlag(Module::Error, "Dwarf Version", 3);
+          M->addModuleFlag(Module::Warning, "Dwarf Version", 4);
 
           WriteBitcodeToFile(M, Out.os());
           Out.keep(); 
