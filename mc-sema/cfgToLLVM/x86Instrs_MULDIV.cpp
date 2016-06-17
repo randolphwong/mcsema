@@ -705,7 +705,7 @@ void MULDIV_populateDispatchMap(DispatchMap &m) {
     m[X86::IMUL64m] = translate_IMUL64m;
     m[X86::IMUL64r] = translate_IMUL64r;
     m[X86::IMUL64rm] = translate_IMUL64rm;
-    m[X86::IMUL64rmi32] = nullptr;
+    m[X86::IMUL64rmi32] = translate_IMUL64rmi32;
     m[X86::IMUL64rmi8] = translate_IMUL64rmi8;
     m[X86::IMUL64rr] = translate_IMUL64rr;
     m[X86::IMUL64rri32] = translate_IMUL64rri32;
