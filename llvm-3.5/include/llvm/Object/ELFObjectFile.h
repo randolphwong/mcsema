@@ -543,8 +543,8 @@ ELFObjectFile<ELFT>::section_rel_end(DataRefImpl Sec) const {
 template <class ELFT>
 section_iterator
 ELFObjectFile<ELFT>::getRelocatedSection(DataRefImpl Sec) const {
-  if (EF.getHeader()->e_type != ELF::ET_REL)
-    return section_end();
+  //if (EF.getHeader()->e_type != ELF::ET_REL)
+    //return section_end();
 
   Elf_Shdr_Iter EShdr = toELFShdrIter(Sec);
   uintX_t Type = EShdr->sh_type;
@@ -620,8 +620,8 @@ template <class ELFT>
 std::error_code
 ELFObjectFile<ELFT>::getRelocationOffset(DataRefImpl Rel,
                                          uint64_t &Result) const {
-  assert(EF.getHeader()->e_type == ELF::ET_REL &&
-         "Only relocatable object files have relocation offsets");
+  //assert(EF.getHeader()->e_type == ELF::ET_REL &&
+         //"Only relocatable object files have relocation offsets");
   Result = getROffset(Rel);
   return object_error::success;
 }

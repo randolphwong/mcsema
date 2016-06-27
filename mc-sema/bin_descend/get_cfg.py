@@ -1422,7 +1422,6 @@ def try_mark_as_function(address):
 
     
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--batch", 
         help="Indicate the script is running in batch mode",

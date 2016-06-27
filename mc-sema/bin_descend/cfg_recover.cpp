@@ -133,7 +133,7 @@ DataSection processDataSection( ExecutableContainer *c,
             reloc_itr++)
     {
         // fix address from section relative to absolute
-        addr = base+*reloc_itr;
+        addr = *reloc_itr > 0x400000 ? *reloc_itr : base+*reloc_itr;
 
         dbgs() << "\tFound relocation at: " << to_string<VA>(addr, hex) << "\n";
 
@@ -225,7 +225,7 @@ static void addDataEntryPointsFromSection(
             reloc_itr != s.reloc_addrs.end();
             reloc_itr++)
     {
-        addr = s.base+*reloc_itr;
+        addr = *reloc_itr > 0x400000 ? *reloc_itr : s.base+*reloc_itr;
 
         // skip addresses not in limits
         if(addr < lower_limit || addr > upper_limit) {
@@ -1124,11 +1124,12 @@ void addDataEntryPoints( ExecutableContainer  *c,
     for(auto s : secs)
     {
         if(s.type != ExecutableContainer::DataSection) {
+            if (s.type != ExecutableContainer::CodeSection)
+                continue;
             out << __FUNCTION__ << ": skipping non-data section: " << s.secName << "\n";
-            continue;
-        } else {
-            out << __FUNCTION__ << ": looking for entry points in: " << s.secName << "\n";
         }
+
+        out << __FUNCTION__ << ": looking for entry points in: " << s.secName << "\n";
 
         addDataEntryPointsFromSection(c, s, entryPoints,
                 s.base,

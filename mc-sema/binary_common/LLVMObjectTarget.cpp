@@ -54,6 +54,9 @@ void LLVMObjectTarget::populateReloMap(const llvm::object::SectionRef &sr) {
     StringRef srName, relosrName;
     sr.getName(srName);
 
+    if (!(srName == ".rela.text") && !(srName == ".rela.rodata") && !(srName == ".rela.data"))
+            return;
+
     if(has_relo != this->objectfile->section_end()) {
         // this section is the relocation section for someone
         // that is, sr is '.rel.text' and has_relo
@@ -643,6 +646,50 @@ bool LLVMObjectTarget::relocate_addr(VA addr, VA &toAddr, VA &relocSize) {
   if (s == "") {
     // Reloc is not bound to a symbol
     return false;
+  }
+
+  if (s == "__libc_csu_fini") {
+      return false;
+  } else if ( s == "__libc_csu_init") {
+      return false;
+  } else if ( s == "main") {
+      return false;
+  } else if ( s == "__libc_start_main") {
+      return false;
+  } else if ( s == "__TMC_END__") {
+      return false;
+  } else if ( s == ".tm_clone_table") {
+      return false;
+  } else if ( s == "_ITM_deregisterTMClone") {
+      return false;
+  } else if ( s == ".tm_clone_table") {
+      return false;
+  } else if ( s == "__TMC_END__") {
+      return false;
+  } else if ( s == ".tm_clone_table") {
+      return false;
+  } else if ( s == "_ITM_registerTMCloneTa") {
+      return false;
+  } else if ( s == ".tm_clone_table") {
+      return false;
+  } else if ( s == ".bss") {
+      return false;
+  } else if ( s == ".bss") {
+      return false;
+  } else if ( s == ".jcr") {
+      return false;
+  } else if ( s == "_Jv_RegisterClasses") {
+      return false;
+  } else if ( s == ".jcr") {
+      return false;
+  } else if ( s == "__init_array_start") {
+      return false;
+  } else if ( s == "__init_array_end") {
+      return false;
+  } else if ( s == "_init") {
+      return false;
+  } else if ( s == ".rodata") {
+      return false;
   }
 
   llvm::dbgs() << __FUNCTION__ << ": Relocation symbol is: " << s << "\n";
