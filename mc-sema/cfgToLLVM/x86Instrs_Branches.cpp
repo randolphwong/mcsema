@@ -43,6 +43,14 @@
 
 using namespace llvm;
 
+static InstTransResult doSimpleRet(BasicBlock *b) {
+  //return without fixing stack pointer or spilling
+
+  ReturnInst::Create(b->getContext(), b);
+
+  return EndCFG;
+}
+
 static InstTransResult doRet(BasicBlock *b) {
   //do a read from the location pointed to by ESP
 
@@ -945,14 +953,16 @@ static InstTransResult translate_JMP64r(NativeModulePtr natM,
     TASSERT(defaultb != nullptr, "Default block has to exit");
     // fallback to doing do_call_value
     doCallV(defaultb, ip, fromReg);
-    return doRetQ(defaultb);
+    // i don't see why we should be fixing the stack pointer after a jmp?
+    return doSimpleRet(defaultb);
 
   } else {
     // translate the JMP64r as a call/ret
     llvm::dbgs() << __FUNCTION__ << ": regular jump via register: "
                  << to_string<VA>(ip->get_loc(), std::hex) << "\n";
     doCallV(block, ip, fromReg);
-    return doRetQ(block);
+    // i don't see why we should be fixing the stack pointer after a jmp?
+    return doSimpleRet(block);
   }
 }
 
