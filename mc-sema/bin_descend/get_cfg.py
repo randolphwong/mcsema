@@ -22,6 +22,7 @@ import itertools
 
 #hack for IDAPython to see google protobuf lib
 sys.path.append('/usr/lib/python2.7/dist-packages')
+sys.path.append('/usr/local/lib/python2.7/dist-packages/protobuf-2.6.1-py2.7.egg')
 import CFG_pb2
 
 def xrange(begin, end=None, step=1):
@@ -30,7 +31,8 @@ def xrange(begin, end=None, step=1):
     else:
         return iter(itertools.count().next, begin)
 
-_DEBUG = False
+_DEBUG = True
+debug_log = []
 
 EXTERNALS = set()
 DATA_SEGMENTS = []
@@ -109,6 +111,8 @@ UCOND_BRANCHES = [\
 def DEBUG(s):
     if _DEBUG:
         syslog.syslog(str(s))
+        # print s
+        debug_log.append(s)
 
 def readDword(ea):
     bytestr = readBytesSlowly(ea, ea+4);
@@ -737,7 +741,9 @@ def resolveRelocation(ea):
             raise Exception("No relocation type at ea: {:x}".format(ea))
 
         DEBUG("rtype : {0:x}, {1:x}, {2:x}\n".format(rtype, idc.GetFixupTgtOff(ea), idc.GetFixupTgtDispl(ea)))
-        relocVal = idc.GetFixupTgtDispl(ea) +  idc.GetFixupTgtOff(ea)
+        # relocVal = idc.GetFixupTgtOff(ea) if idc.GetFixupTgtDispl(ea) > 0x20000 else \
+                   # idc.GetFixupTgtDispl(ea) + idc.GetFixupTgtOff(ea)
+        relocVal = idc.GetFixupTgtDispl(ea) + idc.GetFixupTgtOff(ea)
     else:
         if rtype == idc.FIXUP_OFF32:
             relocVal = readDword(ea)
@@ -1554,6 +1560,13 @@ if __name__ == "__main__":
         recoverCfg(eps, outf, args.exports_are_apis)
     except:
         DEBUG(traceback.format_exc())
+
+    if _DEBUG is True:
+        with open('/tmp/ida_log', 'w') as f:
+            if len(debug_log) != 0:
+                f.write('\n'.join(debug_log))
+            else:
+                f.write('no debug log\n')
     
     #for batch mode: exit IDA when done
     if args.batch:
