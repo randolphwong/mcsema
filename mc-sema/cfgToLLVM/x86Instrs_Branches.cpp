@@ -947,7 +947,14 @@ static InstTransResult translate_JMP64r(NativeModulePtr natM,
     // Terrible HACK
     // Subtract image base since we assume win64 adds it for jump
     // tables. This may not always be true.
-    Value *minus_base = doSubtractImageBaseInt(fromReg, block);
+
+    Value *minus_base;
+    Module *M = block->getParent()->getParent();
+    if (getSystemOS(M) == llvm::Triple::Win32) {
+      minus_base = doSubtractImageBaseInt(fromReg, block);
+    } else {
+      minus_base = fromReg;
+    }
     // end terrible HACK
     doJumpTableViaSwitchReg(block, ip, minus_base, defaultb, 64);
     TASSERT(defaultb != nullptr, "Default block has to exit");
