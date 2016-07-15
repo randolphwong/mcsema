@@ -626,6 +626,18 @@ GENERIC_TRANSLATION_MEM(ADC8rm,
 GENERIC_TRANSLATION(ADC8rr, doAdcRR<8>(ip, block, OP(0), OP(1), OP(2)))
 GENERIC_TRANSLATION(ADC8rr_REV, doAdcRR<8>(ip, block, OP(0), OP(1), OP(2)))
 
+GENERIC_TRANSLATION_MEM(ADD64mr, 
+        doAddMR<64>(ip, block, ADDR(0), OP(5)),
+        doAddMR<64>(ip, block, STD_GLOBAL_OP(0), OP(5)))
+
+GENERIC_TRANSLATION_MEM(ADD64rm, 
+        doAddRM<64>(ip, block, ADDR(2), OP(0), OP(1)),
+        doAddRM<64>(ip, block, STD_GLOBAL_OP(2), OP(0), OP(1)))
+
+GENERIC_TRANSLATION_MEM(ADD64mi8, 
+        doAddMI<64>(ip, block, ADDR(0), OP(5)),
+        doAddMI<64>(ip, block, STD_GLOBAL_OP(0), OP(5)))
+
 void ADD_populateDispatchMap(DispatchMap &m)
 {
     m[X86::ADD16i16] = translate_ADD16i16;
@@ -665,14 +677,15 @@ void ADD_populateDispatchMap(DispatchMap &m)
     m[X86::ADD64ri32] = translate_ADD64ri32;
     m[X86::ADD64ri32_DB] = translate_ADD64ri32;
     m[X86::ADD64i32] = translate_ADD64i32;
-    m[X86::ADD64mi8] = translate_NOOP;
-	m[X86::ADD64mi32] = translate_NOOP;
+    // silently ignoring them is not good!
+    m[X86::ADD64mi8] = translate_ADD64mi8;
+	//m[X86::ADD64mi32] = translate_NOOP;
 
 	m[X86::ADD64rr_DB] = translate_ADD64rr;
 	m[X86::ADD64rr] = translate_ADD64rr;
 	m[X86::ADD64rr_REV] = translate_ADD64rr;
-	m[X86::ADD64rm] = translate_NOOP;
-	m[X86::ADD64mr] = translate_NOOP;
+	m[X86::ADD64rm] = translate_ADD64rm;
+	m[X86::ADD64mr] = translate_ADD64mr;
 
 
     m[X86::ADC16i16] = translate_ADC16i16;

@@ -469,6 +469,10 @@ GENERIC_TRANSLATION_MEM(SBB8rm,
 GENERIC_TRANSLATION(SBB8rr, doSbbRR<8>(ip, block, OP(1), OP(2), OP(0)))
 GENERIC_TRANSLATION(SBB8rr_REV, doSbbRR<8>(ip, block, OP(1), OP(2), OP(0)))
 
+GENERIC_TRANSLATION_MEM(SUB64mi8, 
+	doSubMI<64>(ip, block, ADDR(0), OP(5)),
+	doSubMI<64>(ip, block, STD_GLOBAL_OP(0), OP(5)))
+
 static InstTransResult translate_SUB64ri8(NativeModulePtr natM, BasicBlock *&block, InstPtr ip, MCInst &inst) {
 	InstTransResult ret;
 	ret = doSubRI<64, 8>(ip, block, OP(0), OP(1), OP(2));
@@ -551,4 +555,5 @@ void SUB_populateDispatchMap(DispatchMap &m)
 
         m[X86::SUB64ri8] = translate_SUB64ri8;
         m[X86::SUB64ri32] = translate_SUB64ri32;
+        m[X86::SUB64mi8] = translate_SUB64mi8;
 }
