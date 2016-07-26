@@ -867,6 +867,7 @@ InstTransResult disInstrX86(    InstPtr           ip,
         IP->printInst(&inst, strOut, "");
         errs() << strOut.str() << "\n";
         errs() << inst.getOpcode() << "\n";
+        errs() << IP->getOpcodeName(inst.getOpcode()) << "\n";
         if (X86::REP_PREFIX != opcode && X86::REPNE_PREFIX != opcode) {
             itr = TranslateErrorUnsupported;
         } else {
