@@ -2208,7 +2208,7 @@ void ShiftRoll_populateDispatchMap(DispatchMap &m) {
 		m[X86::SHR64rCL] = translate_SHR64rCL;
 
         m[X86::SHL64ri] = translate_SHL64ri;
-        m[X86::SHL64r1] = translate_SHR64r1;
-        m[X86::SHL64rCL] = translate_SHR64rCL;
+        m[X86::SHL64r1] = translate_SHL64r1;
+        m[X86::SHL64rCL] = translate_SHL64rCL;
 
 }
