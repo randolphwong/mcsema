@@ -377,7 +377,7 @@ static InstTransResult translate_MOV64mi32(NativeModulePtr natM, BasicBlock *&bl
                 ip->get_call_tgt(0)
             );
         Value *addrInt = new PtrToIntInst(
-            callback_fn, llvm::Type::getInt32Ty(block->getContext()), "", block);
+            callback_fn, llvm::Type::getInt64Ty(block->getContext()), "", block);
         ret = doMIMovV<64>(ip, block, ADDR(0), addrInt);
     }
     else if( ip->is_data_offset() ) {
