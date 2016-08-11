@@ -63,36 +63,6 @@ static InstTransResult doInt3(BasicBlock *b) {
 	return ContinueBlock;
 }
 
-
-static InstTransResult doCdq( BasicBlock   *b ) {
-    // EDX <- SEXT(EAX)
-
-    //read EAX
-    Value   *EAX_v = R_READ<32>(b, X86::EAX);
-
-    Value *sign_bit = CONST_V<32>(b, 1<<31);
-
-    Value   *test_bit = 
-        BinaryOperator::CreateAnd(EAX_v, sign_bit, "", b);
-
-
-    Value   *is_zero = new ICmpInst(*b,
-                                    CmpInst::ICMP_EQ,
-                                    test_bit,
-                                    CONST_V<32>(b, 0));
-    Value *edx_val = SelectInst::Create(
-            is_zero,
-            CONST_V<32>(b, 0),
-            CONST_V<32>(b, 0xFFFFFFFF),
-            "", b);
-
-    //write this value to EDX
-    R_WRITE<32>(b, X86::EDX, edx_val);
-
-    return ContinueBlock;
-}
-
-
 template <int width>
 static InstTransResult doBswapR(InstPtr ip,   BasicBlock *&b,
                             const MCOperand &reg) 
@@ -418,10 +388,38 @@ static InstTransResult doAAD(BasicBlock *b) {
 }
 
 template <int width>
+static InstTransResult doCbw(BasicBlock *b) {
+
+    // read al or ax or eax
+    Value *ax_val = R_READ<width>(b, X86::RAX);
+
+    // sign extend to twice width
+    Type    *dt = Type::getIntNTy(b->getContext(), width*2);
+    Value   *res = new SExtInst(ax_val, dt, "", b);
+
+    switch(width) {
+        case 8:
+            R_WRITE<width*2>(b, X86::AX, res);
+            break;
+        case 16:
+            R_WRITE<width*2>(b, X86::EAX, res);
+            break;
+        case 32:
+            R_WRITE<width*2>(b, X86::RAX, res);
+            break;
+        default:
+            throw TErr(__LINE__, __FILE__, "Not supported width");
+    }
+
+    return ContinueBlock;
+
+}
+
+template <int width>
 static InstTransResult doCwd(BasicBlock *b) {
 
     // read ax or eax
-    Value *ax_val = R_READ<width>(b, X86::EAX);
+    Value *ax_val = R_READ<width>(b, X86::RAX);
 
     // sign extend to twice width
     Type    *dt = Type::getIntNTy(b->getContext(), width*2);
@@ -435,22 +433,17 @@ static InstTransResult doCwd(BasicBlock *b) {
                 CONST_V<width*2>(b, width), 
                 "", 
                 b);
-    // original rightmost
-    Value   *wrAX = new TruncInst(tmp, t, "", b);
     // original leftmost
     Value   *wrDX = new TruncInst(res_sh, t, "", b);
     switch(width) {
         case 16:
             R_WRITE<width>(b, X86::DX, wrDX);
-            R_WRITE<width>(b, X86::AX, wrAX);
             break;
         case 32:
             R_WRITE<width>(b, X86::EDX, wrDX);
-            R_WRITE<width>(b, X86::EAX, wrAX);
             break;
         case 64:
             R_WRITE<width>(b, X86::RDX, wrDX);
-            R_WRITE<width>(b, X86::RAX, wrAX);
             break;
         default:
             throw TErr(__LINE__, __FILE__, "Not supported width");
@@ -459,6 +452,51 @@ static InstTransResult doCwd(BasicBlock *b) {
     return ContinueBlock;
 
 }
+
+/*
+ *template <int width>
+ *static InstTransResult doCwd(BasicBlock *b) {
+ *
+ *    // read ax or eax
+ *    Value *ax_val = R_READ<width>(b, X86::RAX);
+ *
+ *    // sign extend to twice width
+ *    Type    *dt = Type::getIntNTy(b->getContext(), width*2);
+ *    Value   *tmp = new SExtInst(ax_val, dt, "", b);
+ *
+ *    // rotate leftmost bits into rightmost
+ *    Type    *t = Type::getIntNTy(b->getContext(), width);
+ *    Value   *res_sh = BinaryOperator::Create(
+ *                Instruction::LShr, 
+ *                tmp, 
+ *                CONST_V<width*2>(b, width), 
+ *                "", 
+ *                b);
+ *    // original rightmost
+ *    Value   *wrAX = new TruncInst(tmp, t, "", b);
+ *    // original leftmost
+ *    Value   *wrDX = new TruncInst(res_sh, t, "", b);
+ *    switch(width) {
+ *        case 16:
+ *            R_WRITE<width>(b, X86::DX, wrDX);
+ *            R_WRITE<width>(b, X86::AX, wrAX);
+ *            break;
+ *        case 32:
+ *            R_WRITE<width>(b, X86::EDX, wrDX);
+ *            R_WRITE<width>(b, X86::EAX, wrAX);
+ *            break;
+ *        case 64:
+ *            R_WRITE<width>(b, X86::RDX, wrDX);
+ *            R_WRITE<width>(b, X86::RAX, wrAX);
+ *            break;
+ *        default:
+ *            throw TErr(__LINE__, __FILE__, "Not supported width");
+ *    }
+ *
+ *    return ContinueBlock;
+ *
+ *}
+ */
 
 static InstTransResult translate_SAHF(NativeModulePtr natM, BasicBlock *&block,
     InstPtr ip, MCInst &inst)
@@ -637,8 +675,6 @@ static InstTransResult doBsfr(
     return ContinueBlock;
 }
 
-
-GENERIC_TRANSLATION(CDQ, doCdq(block))
 GENERIC_TRANSLATION(INT3, doInt3(block))
 GENERIC_TRANSLATION(NOOP, doNoop(block))
 GENERIC_TRANSLATION(HLT, doHlt(block))
@@ -723,8 +759,13 @@ GENERIC_TRANSLATION(AAS, doAAS(block))
 GENERIC_TRANSLATION(AAM8i8, doAAM(block))
 GENERIC_TRANSLATION(AAD8i8, doAAD(block))
 GENERIC_TRANSLATION(RDTSC, doRdtsc(block))
+
+GENERIC_TRANSLATION(CBW, doCbw<8>(block))
+GENERIC_TRANSLATION(CWDE, doCbw<16>(block))
+GENERIC_TRANSLATION(CDQE, doCbw<32>(block));
+
 GENERIC_TRANSLATION(CWD, doCwd<16>(block))
-GENERIC_TRANSLATION(CWDE, doCwd<32>(block))
+GENERIC_TRANSLATION(CDQ, doCwd<32>(block))
 GENERIC_TRANSLATION(CQO, doCwd<64>(block));
 
 GENERIC_TRANSLATION(BT64rr, doBtrr<64>(block, OP(0), OP(1)))
@@ -754,7 +795,6 @@ void Misc_populateDispatchMap(DispatchMap &m) {
     m[X86::STC] = translate_STC;
     m[X86::CLC] = translate_CLC;
     m[X86::BSWAP32r] = translate_BSWAP32r;
-    m[X86::CDQ] = translate_CDQ;
     m[X86::INT3] = translate_INT3;
     m[X86::NOOP] = translate_NOOP;
     m[X86::NOOPW] = translate_NOOP;
@@ -764,10 +804,12 @@ void Misc_populateDispatchMap(DispatchMap &m) {
     m[X86::REP_PREFIX] = translate_NOOP;
     m[X86::PAUSE] = translate_NOOP;
     m[X86::RDTSC] = translate_RDTSC;
-    m[X86::CWD] = translate_CWD;
+    m[X86::CBW] = translate_CBW;
     m[X86::CWDE] = translate_CWDE;
-    m[X86::CQO] = translate_CQO;
+    m[X86::CDQE] = translate_CDQE;
+    m[X86::CWD] = translate_CWD;
     m[X86::CDQ] = translate_CDQ;
+    m[X86::CQO] = translate_CQO;
     m[X86::SAHF] = translate_SAHF;
     m[X86::BT64rr] = translate_BT64rr;
     m[X86::BT32rr] = translate_BT32rr;
